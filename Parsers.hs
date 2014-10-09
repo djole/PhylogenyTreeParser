@@ -1,8 +1,10 @@
 import LexCombinators
-import ParsersAndCandies
+import ParserCandies
 import Data.Char (ord, isDigit)
 import TreeModel
 
+
+-- Implemented grammar for parsing arithmetic equations
 expr :: Parser Int
 addop :: Parser (Int -> Int -> Int)
 mulop :: Parser (Int -> Int -> Int)
@@ -26,7 +28,16 @@ realStr = do
                 ad <- many1 $ sat isDigit
                 return (bd ++ dt ++ ad)
 
+
 -- Parse Newick formatted String
+-- For the utilised grammar refer to:
+-- http://www.bioperl.org/wiki/Newick_tree_format#Grammar
+-- I modified the:
+-- BranchSet --> Branch | Branch "," BranchSet
+-- to:
+-- BranchPair --> Branch "," Branch
+-- because for the time, i want to apply it only to the binary trees
+--
 tree :: Parser BinaryPhyloTree
 tree = do {t <- subtree; string ";"; return (t 0.0)}
 
