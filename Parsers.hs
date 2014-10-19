@@ -1,3 +1,5 @@
+module Parsers where
+
 import LexCombinators
 import ParserCandies
 import Data.Char (ord, isDigit)
@@ -72,4 +74,40 @@ name = word
 
 brLength :: Parser Double
 brLength = do {string ":"; realnum} +++ return 0.0
+
+-- Parse newick formatted tree
+-- and return string that is a correctly formatted string.
+
+newick_tree :: Parser String
+newick_tree = do{
+				t <- newick_subtree;
+				sc <- string ";";
+				return (t ++ sc);
+				}
+
+newick_subtree :: Parser String
+newick_subtree = newick_internal +++ newick_name
+
+newick_internal :: Parser String
+newick_internal = do {
+					lb <- string "(";
+					br_set <- newick_branch_set;
+					rb <- string ")";
+					nm <- newick_name;
+					return (lb ++ br_set ++ rb ++ nm)
+					}
+
+newick_branch_set :: Parser String
+newick_branch_set = newick_branch `chainl1` comma
+
+newick_branch :: Parser String
+newick_branch = do {sub_t <- newick_subtree; br_len <- newick_length; return (sub_t ++ br_len)}
+
+newick_name :: Parser String
+newick_name = word
+
+newick_length :: Parser String
+newick_length = do{col <- string ":"; n <- realStr; return (col ++ n)} +++ return ""
+
+comma = do {symb ","; return (\x y -> x ++ "," ++ y)}
 
