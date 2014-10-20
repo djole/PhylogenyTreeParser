@@ -23,7 +23,11 @@ parse (Parser pars) = pars
 
 -- The method that applies the parser to the string, takes first result of
 -- the parsing, and returns the parsing result
-parseAndPeel p cs = a where (a, _) = head $ parse p cs
+-- parseAndPeel p cs = a where (a, _) = head $ parse p cs
+parseAndPeel :: Parser a -> String -> [a]
+parseAndPeel p cs = case parse p cs of
+						[] -> []
+						((a,_):_) -> [a]
 
 -- Apply two parsers and return the result of first parser, if sucsessful.
 -- If not, return the result of the second parser.
