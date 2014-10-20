@@ -28,7 +28,15 @@ realStr = do
                 bd <- many1 $ token $ sat isDigit
                 dt <- string "." +++ return ""
                 ad <- many1 $ sat isDigit
-                return (bd ++ dt ++ ad)
+                ex <- parseExponent +++ return ""
+                return (bd ++ dt ++ ad ++ ex)
+
+parseExponent :: Parser String
+parseExponent = do
+					e <- token $ string "E"
+					minus <- token $ string "-" +++ return ""
+					n <- many1 $ token $ sat isDigit
+					return (e ++ minus ++ n)
 
 
 -- Parse Newick formatted String
