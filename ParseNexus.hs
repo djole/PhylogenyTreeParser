@@ -4,6 +4,8 @@ import ParserCandies
 import Data.Char
 import System.Environment
 import System.IO
+import System.Directory (getDirectoryContents)
+import Control.Monad (mapM)
 
 rubishPlusParser_ :: Parser a -> String -> [(a, String)]
 rubishPlusParser_  p "" = []
@@ -18,18 +20,32 @@ rubishPlusNewickTree = rubishPlusParser newick_tree
 
 main = do
 	args <- getArgs
-	content <- readFile (args !! 0)
-	let linesOfFile = lines content
-	writeFile (args !! 1) $ parseNLines linesOfFile
+	let inDir = args !! 0
+	dirStuff <- getDirectoryContents inDir
+	let files = filter (\x -> x /= "." && x /= "..") dirStuff
+	contents <- mapM readFile (map (inDir++) files)
+
+	let linesOfFiles = concat $map lines contents
+	writeFile (args !! 1) $ unlines $ map show $ parseNLines linesOfFiles
 
 
-parse1Line :: String -> String
-parse1Line = \l -> show $ parseAndPeel parseTreeLine l
+parse1Line :: String -> [(Double, String)]
+parse1Line = \l -> parseAndPeel parseTreeLine l
 
-parseNLines :: [String] -> String
-parseNLines fileLines = unlines $ filterNonTrees (map parse1Line fileLines)
+parseNLines :: [String] -> [(Double, String)]
+parseNLines fileLines =
+	findBest [] $ concat $ filterNonTrees $ map parse1Line fileLines
 
-filterNonTrees = filter (\ln -> ln /= "[]")
+filterNonTrees :: [[(Double, String)]] -> [[(Double, String)]]
+filterNonTrees = filter (\ln -> length ln /= 0)
+
+findBest :: [(Double, String)] -> [(Double, String)] -> [(Double, String)]
+findBest [] [] = []
+findBest (bst:bsts) [] = [bst]
+findBest [] (t:ts) = findBest [t] ts
+findBest bests ((l,t):ts) = if l < (fst $ head bests)
+							then findBest ((l,t):bests) ts
+							else findBest bests ts
 
 treeName :: Parser String
 treeName = do
