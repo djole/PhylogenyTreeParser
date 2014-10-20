@@ -17,11 +17,17 @@ space = many (sat isSpace)
 word :: Parser String
 word = many (sat isAlphaNum)
 
+wordOrUnderSc :: Parser String
+wordOrUnderSc = many (sat isAlphaNumUnderscore)
+
+-- True if the symbol is alphanumerical or '_'
+isAlphaNumUnderscore c = isAlphaNum c || c == '_'
+
 -- same as previous, only the parser has to be applied at least once
 word1 :: Parser String
 word1 = many1 (sat isAlphaNum)
 
--- parse and remove spaces in front of the token
+-- parse and remove spaces in after of the token
 token :: Parser a -> Parser a
 token p = do
             a <- p
