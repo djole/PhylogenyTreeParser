@@ -25,7 +25,7 @@ realnum = do { x <- realStr; return (read x)}
 
 realStr :: Parser String
 realStr = do
-                bd <- token $ many1 $ sat isDigit
+                bd <- many1 $ token $ sat isDigit
                 dt <- string "." +++ return ""
                 ad <- many1 $ sat isDigit
                 return (bd ++ dt ++ ad)
@@ -70,7 +70,7 @@ branch :: Parser BinaryPhyloTree
 branch = do {inodeConst <- subtree; len <- brLength; return (inodeConst len)}
 
 name :: Parser String
-name = word
+name = wordOrUnderSc
 
 brLength :: Parser Double
 brLength = do {string ":"; realnum} +++ return 0.0
@@ -104,7 +104,7 @@ newick_branch :: Parser String
 newick_branch = do {sub_t <- newick_subtree; br_len <- newick_length; return (sub_t ++ br_len)}
 
 newick_name :: Parser String
-newick_name = word
+newick_name = wordOrUnderSc
 
 newick_length :: Parser String
 newick_length = do{col <- string ":"; n <- realStr; return (col ++ n)} +++ return ""
