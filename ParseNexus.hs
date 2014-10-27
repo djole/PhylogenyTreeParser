@@ -1,3 +1,4 @@
+module ParseNexus where
 import LexCombinators
 import Parsers
 import ParserCandies
@@ -6,6 +7,21 @@ import System.Environment
 import System.IO
 import System.Directory (getDirectoryContents)
 import Control.Monad (mapM)
+import Math.Statistics
+
+data AnalysisStats = AnalysisStats {
+	bestTree :: Maybe (Double, String),
+	likelihoods :: [Double]
+	}
+
+showStats :: AnalysisStats -> String
+showStats (AnalysisStats (Just bt) ls) =
+	"best tree :\n" ++ (show bt) ++ "avg: " ++ show (average ls) ++ "stdev: "
+		++ show (stddev ls)
+
+instance Show AnalysisStats where
+	show = showStats
+
 
 rubishPlusParser_ :: Parser a -> String -> [(a, String)]
 rubishPlusParser_  p "" = []
@@ -15,7 +31,7 @@ rubishPlusParser_  p cs = case parse p cs of
 
 rubishPlusParser p = Parser (rubishPlusParser_ p)
 
-rubishPlusNewickTree = rubishPlusParser newick_tree
+rubishPlusNewickTree = rubishPlusParser newickTree
 
 
 main = do
@@ -24,28 +40,32 @@ main = do
 	dirStuff <- getDirectoryContents inDir
 	let files = filter (\x -> x /= "." && x /= "..") dirStuff
 	contents <- mapM readFile (map (inDir++) files)
-
 	let linesOfFiles = concat $map lines contents
-	writeFile (args !! 1) $ unlines $ map show $ parseNLines linesOfFiles
+	writeFile (args !! 1) $ show $ parseNLines linesOfFiles
 
 
 parse1Line :: String -> [(Double, String)]
 parse1Line = \l -> parseAndPeel parseTreeLine l
 
-parseNLines :: [String] -> [(Double, String)]
+parseNLines :: [String] -> AnalysisStats
 parseNLines fileLines =
-	findBest [] $ concat $ filterNonTrees $ map parse1Line fileLines
+	gatherStats $ concat $ filterNonTrees $ map parse1Line fileLines
 
 filterNonTrees :: [[(Double, String)]] -> [[(Double, String)]]
 filterNonTrees = filter (\ln -> length ln /= 0)
 
-findBest :: [(Double, String)] -> [(Double, String)] -> [(Double, String)]
-findBest [] [] = []
-findBest (bst:bsts) [] = [bst]
-findBest [] (t:ts) = findBest [t] ts
-findBest bests ((l,t):ts) = if l < (fst $ head bests)
-							then findBest ((l,t):bests) ts
-							else findBest bests ts
+gatherStats :: [(Double, String)] -> AnalysisStats
+gatherStats data_ = gatherStats_ (AnalysisStats Nothing []) data_
+
+gatherStats_ :: AnalysisStats -> [(Double, String)] -> AnalysisStats
+gatherStats_ (AnalysisStats Nothing ls) [] = (AnalysisStats Nothing ls)
+gatherStats_ analisSt [] = analisSt
+gatherStats_ (AnalysisStats Nothing ls) (t:ts) =
+	gatherStats_ (AnalysisStats (Just t) (fst t : ls)) ts
+gatherStats_ (AnalysisStats (Just (bl, bt)) ls) ((l,t):ts) =
+	if l < bl
+		then gatherStats_ (AnalysisStats (Just (l, t)) (l:ls)) ts
+		else gatherStats_ (AnalysisStats (Just (bl, bt)) (l:ls)) ts
 
 treeName :: Parser String
 treeName = do
