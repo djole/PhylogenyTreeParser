@@ -98,3 +98,11 @@ parseTreeLine = do
 					t <- rubishPlusNewickTree
 					return (l, t)
 
+findBest :: [(Double, String)] -> [(Double, String)] -> [(Double, String)]
+findBest [] [] = []
+findBest (bst:bsts) [] = [bst]
+findBest [] (t:ts) = findBest [t] ts
+findBest bests ((l,t):ts) = if l < (fst $ head bests)
+							then findBest ((l,t):bests) ts
+							else findBest bests ts
+
