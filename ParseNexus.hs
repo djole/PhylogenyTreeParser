@@ -15,8 +15,11 @@ data AnalysisStats = AnalysisStats {
 	}
 
 showStats :: AnalysisStats -> String
-showStats (AnalysisStats (Just bt) ls) =
-	"best tree :\n" ++ (show bt) ++ "avg: " ++ show (average ls) ++ "stdev: "
+showStats (AnalysisStats Nothing _) = "no best tree"
+showStats (AnalysisStats _ []) = "no likelihoods"
+showStats (AnalysisStats (Just (bl, bt)) ls) =
+	"best likelihood:\n" ++ (show bl) ++ "\n" ++
+	"best tree :\n" ++ (show bt) ++ "\n avg: " ++ show (average ls) ++ "i\n stdev: "
 		++ show (stddev ls)
 
 instance Show AnalysisStats where
