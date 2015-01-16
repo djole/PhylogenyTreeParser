@@ -143,19 +143,25 @@ mapParser p (cs:css)= case parse p cs of
 
 idFilenameT :: Parser (String, String)
 idFilenameT = do
-				pf <- string "sample.nexus.run"
+				nm <- word1
+				dt <- string "."
+				extension <- word1
+				pf <- string ".run"
 				i <- intStr
 				sf <- string ".t"
 				parseNothing
-				return (i, pf ++ i ++ sf)
+				return (i, nm ++ dt ++ extension ++ pf ++ i ++ sf)
 
 idFilenameL :: Parser (String, String)
 idFilenameL = do
-				pf <- string "sample.nexus.run"
+				nm <- word1
+				dt <- string "."
+				extension <- word1
+				pf <- string ".run"
 				i <- intStr
 				sf <- string ".p"
 				parseNothing
-				return (i, pf ++ i ++ sf)
+				return (i, nm ++ dt ++ extension ++ pf ++ i ++ sf)
 
 parseNothing :: Parser String
 parseNothing = Parser (\cs -> if length cs == 0 then [("", "")] else [])
@@ -178,7 +184,10 @@ joinTreesLiksConts tcon lcon =
 			treesMap = fst $ head $ parse parseTreesFile tcon
 			liksMap = fst $ head $ parse parseLikelihoodFile lcon
 
-
+showBestTree :: [(Double, String)] -> String
+showBestTree [] = "no trees"
+showBestTree (t:ts) = "best likelihood:\n" ++ (show $ fst t) ++
+	"\nbest tree:\n" ++ (show $ snd t)
 
 main = do
 	args <- getArgs
@@ -192,7 +201,7 @@ main = do
 	bayesLikMapContent <- readFileMap bayesLikMapFnames
 	let treeLikContentMap = joinMaps (Map.fromList bayesNexsMapContent) (Map.fromList bayesLikMapContent)
 	let likNewickMap = concat $ map (\(tc, lc) -> joinTreesLiksConts tc lc) $ Map.toAscList treeLikContentMap
-	writeFile (args !! 1) $ show $ findBest [] likNewickMap
+	writeFile (args !! 1) $ showBestTree $ findBest [] likNewickMap
 
 
 	--let bayesLikelihoods = filter isBayesLikelihood dirStuff
